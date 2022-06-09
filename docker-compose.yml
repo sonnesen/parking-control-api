@@ -1,0 +1,27 @@
+version: "3.3"
+
+services:
+  db:
+    container_name: postgres_container
+    image: postgres
+    restart: always
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-banco123}
+      POSTGRES_DB: parking-control-db
+    ports:
+      - "5432:5432"
+    volumes:
+      - db:/var/lib/postgresql/data
+      - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql
+
+  adminer:
+    container_name: adminer_container
+    image: adminer
+    restart: always
+    ports:
+      - "8180:8080"
+
+volumes:
+  db:
+    driver: local
