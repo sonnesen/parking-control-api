@@ -3,7 +3,7 @@ package com.parkingcontrol.domain.model;
 import com.parkingcontrol.api.dto.ParkingSpotDto;
 import lombok.Data;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
