@@ -1,8 +1,8 @@
 package com.parkingcontrol.api.controller;
 
 import com.parkingcontrol.api.dto.ParkingSpotDto;
-import com.parkingcontrol.domain.exception.ParkingSpotNotFoundException;
 import com.parkingcontrol.domain.service.ParkingSpotService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -12,7 +12,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import jakarta.validation.Valid;
 import java.util.UUID;
 
 @RequiredArgsConstructor
@@ -24,8 +23,7 @@ public class ParkingSpotController {
     private final ParkingSpotService parkingSpotService;
 
     @PostMapping
-    public ResponseEntity<ParkingSpotDto> saveParkingSpot(@RequestBody @Valid ParkingSpotDto parkingSpotDto)
-            throws Exception {
+    public ResponseEntity<ParkingSpotDto> saveParkingSpot(@RequestBody @Valid ParkingSpotDto parkingSpotDto) {
         return ResponseEntity.status(HttpStatus.CREATED).body(parkingSpotService.save(parkingSpotDto));
     }
 
@@ -36,7 +34,7 @@ public class ParkingSpotController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<ParkingSpotDto> getOneParkingSpot(@PathVariable(value = "id") UUID id) throws ParkingSpotNotFoundException {
+    public ResponseEntity<ParkingSpotDto> getOneParkingSpot(@PathVariable(value = "id") UUID id) {
         return ResponseEntity.status(HttpStatus.OK).body(parkingSpotService.findById(id));
     }
 
@@ -48,8 +46,7 @@ public class ParkingSpotController {
 
     @PutMapping("/{id}")
     public ResponseEntity<ParkingSpotDto> updateParkingSpot(@PathVariable(value = "id") UUID id,
-                                                            @RequestBody @Valid ParkingSpotDto parkingSpotDto)
-            throws Exception {
+                                                            @RequestBody @Valid ParkingSpotDto parkingSpotDto) {
         return ResponseEntity.status(HttpStatus.OK).body(parkingSpotService.updateParkingSpot(id, parkingSpotDto));
     }
 

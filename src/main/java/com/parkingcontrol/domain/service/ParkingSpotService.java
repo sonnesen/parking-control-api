@@ -8,6 +8,7 @@ import com.parkingcontrol.domain.exception.ParkingSpotNotFoundException;
 import com.parkingcontrol.domain.model.ParkingSpot;
 import com.parkingcontrol.domain.model.Vehicle;
 import com.parkingcontrol.domain.repository.ParkingSpotRepository;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.data.domain.Page;
@@ -15,7 +16,6 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
-import jakarta.transaction.Transactional;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.UUID;
@@ -29,7 +29,7 @@ public class ParkingSpotService {
     private final ModelMapper modelMapper;
 
     @Transactional
-    public ParkingSpotDto save(ParkingSpotDto parkingSpotDto) throws Exception {
+    public ParkingSpotDto save(ParkingSpotDto parkingSpotDto) {
         doVerifications(parkingSpotDto);
         ParkingSpot parkingSpot = toModel(parkingSpotDto);
         parkingSpot.setRegistrationDate(LocalDateTime.now(ZoneId.of("UTC")));
@@ -37,7 +37,7 @@ public class ParkingSpotService {
         return toDto(savedParkingSpot);
     }
 
-    public ParkingSpotDto updateParkingSpot(UUID id, ParkingSpotDto parkingSpotDto) throws Exception {
+    public ParkingSpotDto updateParkingSpot(UUID id, ParkingSpotDto parkingSpotDto) {
         doVerifications(parkingSpotDto);
         ParkingSpot existentParkingSpot = verifyIfExists(id);
         ParkingSpot parkingSpotToUpdate = toModel(parkingSpotDto);
@@ -47,19 +47,19 @@ public class ParkingSpotService {
         return toDto(updatedParkingSpot);
     }
 
-    private void verifyIfExistsByLicensePlateCar(String licensePlateCar) throws ParkingSpotLicensePlateCarAlreadyInUseException {
+    private void verifyIfExistsByLicensePlateCar(String licensePlateCar) {
         if (parkingSpotRepository.existsByVehicleLicensePlateCar(licensePlateCar)) {
             throw new ParkingSpotLicensePlateCarAlreadyInUseException(licensePlateCar);
         }
     }
 
-    private void verifyIfExistsByParkingSpotNumber(String parkingSpotNumber) throws ParkingSpotAlreadyInUseException {
+    private void verifyIfExistsByParkingSpotNumber(String parkingSpotNumber) {
         if (parkingSpotRepository.existsByParkingSpotNumber(parkingSpotNumber)) {
             throw new ParkingSpotAlreadyInUseException(parkingSpotNumber);
         }
     }
 
-    private void verifyIfExistsByApartmentAndBlock(String apartment, String block) throws ParkingSpotAlreadyRegistered {
+    private void verifyIfExistsByApartmentAndBlock(String apartment, String block) {
         if (parkingSpotRepository.existsByApartmentAndBlock(apartment, block)) {
             throw new ParkingSpotAlreadyRegistered(apartment, block);
         }
@@ -83,7 +83,7 @@ public class ParkingSpotService {
         return parkingSpotRepository.findById(id).orElseThrow(() -> new ParkingSpotNotFoundException(id));
     }
 
-    private void doVerifications(ParkingSpotDto parkingSpotDto) throws Exception {
+    private void doVerifications(ParkingSpotDto parkingSpotDto) {
         verifyIfExistsByLicensePlateCar(parkingSpotDto.getLicensePlateCar());
         verifyIfExistsByParkingSpotNumber(parkingSpotDto.getParkingSpotNumber());
         verifyIfExistsByApartmentAndBlock(parkingSpotDto.getApartment(), parkingSpotDto.getBlock());
