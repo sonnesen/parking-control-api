@@ -1,9 +1,8 @@
 package com.parkingcontrol.domain.model;
 
-import com.parkingcontrol.api.dto.ParkingSpotDto;
+import jakarta.persistence.*;
 import lombok.Data;
 
-import jakarta.persistence.*;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
@@ -34,11 +33,4 @@ public class ParkingSpot {
 
     @Column(nullable = false, length = 30)
     private String block;
-
-    public void setVehicleFromDto(ParkingSpotDto dto) {
-        this.vehicle = new Vehicle(dto.getLicensePlateCar(),
-                dto.getBrandCar(),
-                dto.getModelCar(),
-                dto.getColorCar());
-    }
 }

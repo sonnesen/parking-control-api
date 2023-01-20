@@ -1,6 +1,8 @@
 package com.parkingcontrol.api.controller;
 
-import com.parkingcontrol.api.dto.ParkingSpotDto;
+import com.parkingcontrol.api.request.CreateParkingSpotRequest;
+import com.parkingcontrol.api.request.UpdateParkingSpotRequest;
+import com.parkingcontrol.api.response.ParkingSpotResponse;
 import com.parkingcontrol.domain.service.ParkingSpotService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -23,18 +25,18 @@ public class ParkingSpotController {
     private final ParkingSpotService parkingSpotService;
 
     @PostMapping
-    public ResponseEntity<ParkingSpotDto> saveParkingSpot(@RequestBody @Valid ParkingSpotDto parkingSpotDto) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(parkingSpotService.save(parkingSpotDto));
+    public ResponseEntity<ParkingSpotResponse> create(@RequestBody @Valid CreateParkingSpotRequest request) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(parkingSpotService.create(request));
     }
 
     @GetMapping
-    public ResponseEntity<Page<ParkingSpotDto>> getAllParkingSpots(
+    public ResponseEntity<Page<ParkingSpotResponse>> getAllParkingSpots(
             @PageableDefault(sort = "id", direction = Sort.Direction.ASC) Pageable pageable) {
         return ResponseEntity.status(HttpStatus.OK).body(parkingSpotService.findAll(pageable));
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<ParkingSpotDto> getOneParkingSpot(@PathVariable(value = "id") UUID id) {
+    public ResponseEntity<ParkingSpotResponse> getOneParkingSpot(@PathVariable(value = "id") UUID id) {
         return ResponseEntity.status(HttpStatus.OK).body(parkingSpotService.findById(id));
     }
 
@@ -45,9 +47,9 @@ public class ParkingSpotController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<ParkingSpotDto> updateParkingSpot(@PathVariable(value = "id") UUID id,
-                                                            @RequestBody @Valid ParkingSpotDto parkingSpotDto) {
-        return ResponseEntity.status(HttpStatus.OK).body(parkingSpotService.updateParkingSpot(id, parkingSpotDto));
+    public ResponseEntity<ParkingSpotResponse> updateParkingSpot(@PathVariable(value = "id") UUID id,
+                                                                 @RequestBody @Valid UpdateParkingSpotRequest request) {
+        return ResponseEntity.status(HttpStatus.OK).body(parkingSpotService.updateParkingSpot(id, request));
     }
 
 }

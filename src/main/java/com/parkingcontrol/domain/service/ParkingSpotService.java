@@ -1,6 +1,8 @@
 package com.parkingcontrol.domain.service;
 
-import com.parkingcontrol.api.dto.ParkingSpotDto;
+import com.parkingcontrol.api.request.CreateParkingSpotRequest;
+import com.parkingcontrol.api.request.UpdateParkingSpotRequest;
+import com.parkingcontrol.api.response.ParkingSpotResponse;
 import com.parkingcontrol.domain.exception.ParkingSpotAlreadyInUseException;
 import com.parkingcontrol.domain.exception.ParkingSpotAlreadyRegistered;
 import com.parkingcontrol.domain.exception.ParkingSpotLicensePlateCarAlreadyInUseException;
@@ -19,7 +21,6 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
 @Service
@@ -29,22 +30,40 @@ public class ParkingSpotService {
     private final ModelMapper modelMapper;
 
     @Transactional
-    public ParkingSpotDto save(ParkingSpotDto parkingSpotDto) {
-        doVerifications(parkingSpotDto);
-        ParkingSpot parkingSpot = toModel(parkingSpotDto);
+    public ParkingSpotResponse create(CreateParkingSpotRequest request) {
+        doVerifications(request);
+        ParkingSpot parkingSpot = toModel(request);
         parkingSpot.setRegistrationDate(LocalDateTime.now(ZoneId.of("UTC")));
-        ParkingSpot savedParkingSpot = parkingSpotRepository.save(parkingSpot);
-        return toDto(savedParkingSpot);
+        ParkingSpot createdParkingSpot = parkingSpotRepository.save(parkingSpot);
+        return toResponse(createdParkingSpot);
     }
 
-    public ParkingSpotDto updateParkingSpot(UUID id, ParkingSpotDto parkingSpotDto) {
-        doVerifications(parkingSpotDto);
+    public ParkingSpotResponse updateParkingSpot(UUID id, UpdateParkingSpotRequest createParkingSpotRequest) {
         ParkingSpot existentParkingSpot = verifyIfExists(id);
-        ParkingSpot parkingSpotToUpdate = toModel(parkingSpotDto);
+        ParkingSpot parkingSpotToUpdate = toModel(createParkingSpotRequest);
         parkingSpotToUpdate.setId(existentParkingSpot.getId());
+        parkingSpotToUpdate.getVehicle().setLicensePlateCar(existentParkingSpot.getVehicle().getLicensePlateCar());
         parkingSpotToUpdate.setRegistrationDate(existentParkingSpot.getRegistrationDate());
+        parkingSpotToUpdate.setParkingSpotNumber(existentParkingSpot.getParkingSpotNumber());
+        parkingSpotToUpdate.setApartment(existentParkingSpot.getApartment());
+        parkingSpotToUpdate.setBlock(existentParkingSpot.getBlock());
+        parkingSpotToUpdate.setParkingSpotNumber(existentParkingSpot.getParkingSpotNumber());
         ParkingSpot updatedParkingSpot = parkingSpotRepository.save(parkingSpotToUpdate);
-        return toDto(updatedParkingSpot);
+        return toResponse(updatedParkingSpot);
+    }
+
+    public Page<ParkingSpotResponse> findAll(Pageable pageable) {
+        return new PageImpl<>(parkingSpotRepository.findAll(pageable).stream().map(this::toResponse).toList());
+    }
+
+    public ParkingSpotResponse findById(UUID id) {
+        ParkingSpot foundParkingSpot = parkingSpotRepository.findById(id).orElseThrow(() -> new ParkingSpotNotFoundException(id));
+        return toResponse(foundParkingSpot);
+    }
+
+    @Transactional
+    public void deleteById(UUID id) {
+        parkingSpotRepository.deleteById(id);
     }
 
     private void verifyIfExistsByLicensePlateCar(String licensePlateCar) {
@@ -65,48 +84,45 @@ public class ParkingSpotService {
         }
     }
 
-    public Page<ParkingSpotDto> findAll(Pageable pageable) {
-        return new PageImpl<>(parkingSpotRepository.findAll(pageable).stream().map(this::toDto).collect(Collectors.toList()));
-    }
-
-    public ParkingSpotDto findById(UUID id) throws ParkingSpotNotFoundException {
-        ParkingSpot foundParkingSpot = parkingSpotRepository.findById(id).orElseThrow(() -> new ParkingSpotNotFoundException(id));
-        return toDto(foundParkingSpot);
-    }
-
-    @Transactional
-    public void deleteById(UUID id) {
-        parkingSpotRepository.deleteById(id);
-    }
-
-    private ParkingSpot verifyIfExists(UUID id) throws ParkingSpotNotFoundException {
+    private ParkingSpot verifyIfExists(UUID id) {
         return parkingSpotRepository.findById(id).orElseThrow(() -> new ParkingSpotNotFoundException(id));
     }
 
-    private void doVerifications(ParkingSpotDto parkingSpotDto) {
-        verifyIfExistsByLicensePlateCar(parkingSpotDto.getLicensePlateCar());
-        verifyIfExistsByParkingSpotNumber(parkingSpotDto.getParkingSpotNumber());
-        verifyIfExistsByApartmentAndBlock(parkingSpotDto.getApartment(), parkingSpotDto.getBlock());
+    private void doVerifications(CreateParkingSpotRequest request) {
+        verifyIfExistsByLicensePlateCar(request.getLicensePlateCar());
+        verifyIfExistsByParkingSpotNumber(request.getParkingSpotNumber());
+        verifyIfExistsByApartmentAndBlock(request.getApartment(), request.getBlock());
     }
 
-    private ParkingSpot toModel(ParkingSpotDto dto) {
-        ParkingSpot model = modelMapper.map(dto, ParkingSpot.class);
+    private ParkingSpot toModel(CreateParkingSpotRequest request) {
+        ParkingSpot model = modelMapper.map(request, ParkingSpot.class);
         Vehicle vehicle = Vehicle.builder()
-                .modelCar(dto.getModelCar())
-                .colorCar(dto.getColorCar())
-                .brandCar(dto.getBrandCar())
-                .licensePlateCar(dto.getLicensePlateCar())
+                .modelCar(request.getModelCar())
+                .colorCar(request.getColorCar())
+                .brandCar(request.getBrandCar())
+                .licensePlateCar(request.getLicensePlateCar())
                 .build();
         model.setVehicle(vehicle);
         return model;
     }
 
-    private ParkingSpotDto toDto(ParkingSpot model) {
-        ParkingSpotDto dto = modelMapper.map(model, ParkingSpotDto.class);
-        dto.setLicensePlateCar(model.getVehicle().getLicensePlateCar());
-        dto.setColorCar(model.getVehicle().getColorCar());
-        dto.setBrandCar(model.getVehicle().getBrandCar());
-        dto.setModelCar(model.getVehicle().getModelCar());
-        return dto;
+    private ParkingSpot toModel(UpdateParkingSpotRequest request) {
+        ParkingSpot model = modelMapper.map(request, ParkingSpot.class);
+        Vehicle vehicle = Vehicle.builder()
+                .modelCar(request.getModelCar())
+                .colorCar(request.getColorCar())
+                .brandCar(request.getBrandCar())
+                .build();
+        model.setVehicle(vehicle);
+        return model;
+    }
+
+    private ParkingSpotResponse toResponse(ParkingSpot model) {
+        ParkingSpotResponse response = modelMapper.map(model, ParkingSpotResponse.class);
+        response.setLicensePlateCar(model.getVehicle().getLicensePlateCar());
+        response.setColorCar(model.getVehicle().getColorCar());
+        response.setBrandCar(model.getVehicle().getBrandCar());
+        response.setModelCar(model.getVehicle().getModelCar());
+        return response;
     }
 }
